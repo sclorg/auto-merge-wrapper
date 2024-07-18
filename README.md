@@ -48,7 +48,7 @@ permissions:
   contents: read
 
 jobs:
-    download-metadata:
+  download-metadata:
     if: >
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
@@ -114,7 +114,7 @@ jobs:
       - id: get-pr-numbers
         if: inputs.pr-number == '0'
         name: Get all open PRs
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           # !FIXME: this is not working if there is more than 100 PRs opened
           script: |
