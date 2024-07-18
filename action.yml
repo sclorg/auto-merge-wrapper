@@ -1,0 +1,60 @@
+name: Auto Merge wrapper
+description: Set of actions for sclorg auto-merge automation
+
+branding:
+  icon: git-merge
+  color: blue
+
+inputs:
+  # At least one of pr-number or pr-metadata has to be provided
+  pr-number:
+    required: false
+    description: Pull Request number
+  pr-metadata:
+    required: false
+    description: Pull Request metadata
+
+  token:
+    required: true
+    description: GitHub TOKEN
+
+runs:
+  using: composite
+  
+  steps:
+    # When running on schedule, we need to fetch the PR metadata
+    # But when running on workflow_run, we already have the PR metadata in form of artifact.
+    # This step is skipped when pr-metadata is provided as input.
+    - if: ${{ !inputs.pr-metadata }}
+      id: metadata
+      name: Gather Pull Request Metadata
+      uses: redhat-plumbers-in-action/gather-pull-request-metadata@v1
+      with:
+        pr-number: ${{ inputs.pr-number }}
+
+    # Validate the pull request (CI, review, etc.)
+    - id: pull-request-validator
+      name: Pull Request Validator
+      uses: redhat-plumbers-in-action/pull-request-validator@v2
+      with:
+        pr-metadata: ${{ inputs.pr-metadata && inputs.pr-metadata || steps.metadata.outputs.metadata }}
+        token: ${{ inputs.token }}
+
+    # Merge the PR if all checks passed
+    - id: auto-merge
+      name: Auto Merge
+      uses: redhat-plumbers-in-action/auto-merge@v2
+      with:
+        pr-metadata: ${{ inputs.pr-metadata && inputs.pr-metadata || steps.metadata.outputs.metadata }}
+        token: ${{ inputs.token }}
+
+    # Always show the results in PR sticky comment
+    - if: ${{ !cancelled() }}
+      name: Show results in PR comment
+      uses: redhat-plumbers-in-action/issue-commentator@v1
+      with:
+        issue: ${{ inputs.pr-metadata && fromJSON(inputs.pr-metadata).number || fromJSON(steps.metadata.outputs.metadata).number }}
+        message: |
+          ${{ steps.pull-request-validator.outputs.status && steps.pull-request-validator.outputs.status || '' }}
+          ${{ steps.auto-merge.outputs.status && steps.auto-merge.outputs.status || '' }}
+        token: ${{ inputs.token }}
