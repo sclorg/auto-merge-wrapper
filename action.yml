@@ -40,14 +40,6 @@ runs:
         pr-metadata: ${{ inputs.pr-metadata && inputs.pr-metadata || steps.metadata.outputs.metadata }}
         token: ${{ inputs.token }}
 
-    # Merge the PR if all checks passed
-    - id: auto-merge
-      name: Auto Merge
-      uses: redhat-plumbers-in-action/auto-merge@v2
-      with:
-        pr-metadata: ${{ inputs.pr-metadata && inputs.pr-metadata || steps.metadata.outputs.metadata }}
-        token: ${{ inputs.token }}
-
     # Always show the results in PR sticky comment
     - if: ${{ !cancelled() }}
       name: Show results in PR comment
