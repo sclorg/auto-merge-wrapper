@@ -38,6 +38,7 @@ runs:
       uses: redhat-plumbers-in-action/pull-request-validator@v2
       with:
         pr-metadata: ${{ inputs.pr-metadata && inputs.pr-metadata || steps.metadata.outputs.metadata }}
+        required-approvals: '2'
         token: ${{ inputs.token }}
 
     # Merge the PR if all checks passed
